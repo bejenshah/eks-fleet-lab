@@ -1,0 +1,41 @@
+# BOOTSTRAP (applied once to the hub by Terraform in hub/30-argocd via gitops-bridge)
+#
+# An ApplicationSet whose cluster generator selects ONLY the hub (label fleet_role=hub).
+# It generates one Application, "fleet-addons", that syncs every manifest found under
+# <addons_repo_basepath>addons/ into the hub's argocd namespace.
+# Those manifests are themselves ApplicationSets (one per addon)  =>  app-of-ApplicationSets.
+#
+# Note the values come from the hub cluster secret's ANNOTATIONS, which Terraform wrote.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: fleet-bootstrap
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            fleet_role: hub
+  template:
+    metadata:
+      name: fleet-addons
+    spec:
+      project: default
+      source:
+        repoURL: '{{ .metadata.annotations.addons_repo_url }}'
+        targetRevision: '{{ .metadata.annotations.addons_repo_revision }}'
+        path: '{{ .metadata.annotations.addons_repo_basepath }}addons'
+        directory:
+          recurse: true
+      destination:
+        server: '{{ .server }}'
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
