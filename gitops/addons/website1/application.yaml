@@ -1,0 +1,27 @@
+# WORKLOAD: website1 -> eks-spoke-01 only
+#
+# Lives in the hub's argocd namespace (created by the fleet-addons Application).
+# Syncs gitops/workloads/website1 to the spoke cluster registered in spoke-01/40-register
+# (ArgoCD cluster secret name: eks-spoke-01).
+#
+# Removing this file (or the namespace manifest) and pushing deletes the website1
+# namespace from the spoke - including everything inside it.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: website1-eks-spoke-01
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io # deleting the app also removes what it deployed
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/bejenshah/eks-fleet-lab.git
+    targetRevision: main
+    path: gitops/workloads/website1
+  destination:
+    name: eks-spoke-01
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -1,0 +1,24 @@
+# WORKLOAD: website1 - Service in front of nginx
+#
+# ClusterIP (no load balancer cost). ExternalDNS on the spoke runs with
+# --publish-internal-services, so the hostname annotation below gets an A record
+# (pointing at the ClusterIP) in the private Route53 zone spoke-01.fleet.internal.
+# That name only resolves inside the spoke VPC.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: website1
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/part-of: website1
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: website1.spoke-01.fleet.internal
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: nginx
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
