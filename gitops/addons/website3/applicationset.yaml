@@ -1,0 +1,40 @@
+# WORKLOAD: website3 -> hub AND spoke
+#
+# Lives in the hub's argocd namespace (created by the fleet-addons Application).
+# Cluster generator: one Application per registered cluster whose secret has
+# fleet_role = hub or spoke  ->  website3-eks-hub, website3-eks-spoke-01.
+# Any new spoke registered with fleet_role=spoke gets website3 automatically.
+#
+# Removing this file and pushing deletes website3 from every cluster.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workload-website3
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: fleet_role
+              operator: In
+              values: ["hub", "spoke"]
+  template:
+    metadata:
+      name: 'website3-{{ .name }}'
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io # removing the app also removes what it deployed
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/bejenshah/eks-fleet-lab.git
+        targetRevision: main
+        path: gitops/workloads/website3
+      destination:
+        name: '{{ .name }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

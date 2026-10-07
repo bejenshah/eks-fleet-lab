@@ -1,0 +1,9 @@
+# WORKLOAD: website3
+#
+# Synced to the HUB and the SPOKE by the ApplicationSet in gitops/addons/website3/applicationset.yaml.
+# Kept outside gitops/addons/ on purpose - everything under addons/ is applied to the HUB
+# by the fleet-addons Application.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: website3

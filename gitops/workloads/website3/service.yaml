@@ -1,0 +1,21 @@
+# WORKLOAD: website3 - Service in front of nginx
+#
+# ClusterIP (internal only, no load balancer cost). Same manifest on hub and spoke, so there is no
+# per-cluster ExternalDNS hostname annotation here (the hub has no ExternalDNS, and each
+# spoke has its own private zone).
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: website3
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/part-of: website3
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: nginx
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
